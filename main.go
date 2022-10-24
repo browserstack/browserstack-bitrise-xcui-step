@@ -17,32 +17,36 @@ func main() {
 
 	username := os.Getenv("browserstack_username")
 	access_key := os.Getenv("browserstack_accesskey")
-	ios_app := os.Getenv("app_ipa_path")
+	app_bundle_name := os.Getenv("app_bundle_name")
+	app_custom_id := os.Getenv("app_custom_id")
+	test_suite_custom_id := os.Getenv("test_suite_custom_id")
 	test_suite_path := os.Getenv("xcui_test_suite")
 
 	if username == "" || access_key == "" {
 		failf(UPLOAD_APP_ERROR, "invalid credentials")
 	}
 
-	if ios_app == "" {
-		failf(IPA_NOT_FOUND)
-	}
-
 	if test_suite_path == "" {
 		failf(RUNNER_APP_NOT_FOUND)
 	}
 
+	ipa_file_name := locateAppBundleFileAndIpa(test_suite_path, app_bundle_name)
 	find_and_zip_file_err := locateTestRunnerFileAndZip(test_suite_path)
+
+	if ipa_file_name == "" {
+		failf(IPA_NOT_FOUND)
+	}
 
 	if find_and_zip_file_err != nil {
 		failf(find_and_zip_file_err.Error())
 	}
 
+	test_app_app := ipa_file_name
 	test_runner_app := TEST_RUNNER_ZIP_FILE_NAME
 
 	log.Print("Uploading app on BrowserStack App Automate")
 
-	upload_app, err := upload(ios_app, APP_UPLOAD_ENDPOINT, username, access_key)
+	upload_app, err := upload(test_app_app, APP_UPLOAD_ENDPOINT, &app_custom_id, username, access_key)
 
 	if err != nil {
 		failf(err.Error())
@@ -60,7 +64,7 @@ func main() {
 
 	log.Print("Uploading test suite on BrowserStack App Automate")
 
-	upload_test_suite, err := upload(test_runner_app, TEST_SUITE_UPLOAD_ENDPOINT, username, access_key)
+	upload_test_suite, err := upload(test_runner_app, TEST_SUITE_UPLOAD_ENDPOINT, &test_suite_custom_id, username, access_key)
 
 	if err != nil {
 		failf(err.Error())
