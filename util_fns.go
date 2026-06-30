@@ -95,21 +95,21 @@ func getTestFilters(payload *BrowserStackPayload) {
 	}
 }
 
-// parseCaptureContent parses the network_logs_capture_content input.
-// An empty value means "disabled". Standard boolean literals are accepted
-// (true/false/1/0/...). Any other value is treated as a hard, actionable error.
-func parseCaptureContent(raw string) (bool, error) {
+// parseNetworkLogsOptions parses the network_logs_options input, which mirrors
+// the App Automate `networkLogsOptions` capability (e.g. {"captureContent": true}).
+// An empty value means "not set". Invalid JSON is a hard, actionable error.
+func parseNetworkLogsOptions(raw string) (*NetworkLogsOptions, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return false, nil
+		return nil, nil
 	}
 
-	enabled, err := strconv.ParseBool(raw)
-	if err != nil {
-		return false, fmt.Errorf(NETWORK_LOGS_CAPTURE_CONTENT_INVALID, raw)
+	options := NetworkLogsOptions{}
+	if err := json.Unmarshal([]byte(raw), &options); err != nil {
+		return nil, fmt.Errorf(NETWORK_LOGS_OPTIONS_INVALID, err)
 	}
 
-	return enabled, nil
+	return &options, nil
 }
 
 // this util only picks data from env and map it to the struct
@@ -122,9 +122,9 @@ func createBuildPayload() BrowserStackPayload {
 	use_local, _ := strconv.ParseBool(os.Getenv("use_local"))
 	use_dynamic_tests, _ := strconv.ParseBool(os.Getenv("use_dynamic_tests"))
 
-	capture_content, capture_content_err := parseCaptureContent(os.Getenv("network_logs_capture_content"))
-	if capture_content_err != nil {
-		failf(capture_content_err.Error())
+	network_logs_options, network_logs_options_err := parseNetworkLogsOptions(os.Getenv("network_logs_options"))
+	if network_logs_options_err != nil {
+		failf(network_logs_options_err.Error())
 	}
 
 	sharding_data := TestSharding{}
@@ -148,15 +148,15 @@ func createBuildPayload() BrowserStackPayload {
 		UseLocal:            use_local,
 	}
 
-	// networkLogsOptions.captureContent is only honoured by App Automate when
-	// networkLogs is also enabled, so enable it automatically when capture
-	// content is requested (avoids a backend "networkLogs not enabled" error).
-	if capture_content {
+	// networkLogsOptions is only honoured by App Automate when networkLogs is
+	// also enabled, so enable it automatically when options are provided
+	// (avoids a backend "networkLogs not enabled" error).
+	if network_logs_options != nil {
 		if !network_logs {
-			log.Println("network_logs auto-enabled because network_logs_capture_content is set to true")
+			log.Println("network_logs auto-enabled because network_logs_options was provided")
 		}
 		payload.NetworkLogs = true
-		payload.NetworkLogsOptions = &NetworkLogsOptions{CaptureContent: true}
+		payload.NetworkLogsOptions = network_logs_options
 	}
 
 	getTestFilters(&payload)

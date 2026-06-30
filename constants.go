@@ -25,5 +25,5 @@ const (
 	IPA_NOT_FOUND            = "app_ipa_path: couldn’t find the iOS app (.ipa file). Please add the $BITRISE_IPA_PATH from Xcode Archive & Export for iOS step or the absolute path of iOS app (.ipa file)"
 	FILE_ZIP_ERROR           = "Something went wrong while processing the test-suite, error: %s"
 
-	NETWORK_LOGS_CAPTURE_CONTENT_INVALID = "Invalid value for network_logs_capture_content: %q. Accepted values are \"true\" or \"false\"."
+	NETWORK_LOGS_OPTIONS_INVALID = "Invalid network_logs_options. Expected JSON such as {\"captureContent\": true}. Error: %s"
 )
