@@ -95,6 +95,23 @@ func getTestFilters(payload *BrowserStackPayload) {
 	}
 }
 
+// parseCaptureContent parses the network_logs_capture_content input.
+// An empty value means "disabled". Standard boolean literals are accepted
+// (true/false/1/0/...). Any other value is treated as a hard, actionable error.
+func parseCaptureContent(raw string) (bool, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return false, nil
+	}
+
+	enabled, err := strconv.ParseBool(raw)
+	if err != nil {
+		return false, fmt.Errorf(NETWORK_LOGS_CAPTURE_CONTENT_INVALID, raw)
+	}
+
+	return enabled, nil
+}
+
 // this util only picks data from env and map it to the struct
 func createBuildPayload() BrowserStackPayload {
 	instrumentation_logs, _ := strconv.ParseBool(os.Getenv("instrumentation_logs"))
@@ -104,6 +121,11 @@ func createBuildPayload() BrowserStackPayload {
 	video_recording, _ := strconv.ParseBool(os.Getenv("video_recording"))
 	use_local, _ := strconv.ParseBool(os.Getenv("use_local"))
 	use_dynamic_tests, _ := strconv.ParseBool(os.Getenv("use_dynamic_tests"))
+
+	capture_content, capture_content_err := parseCaptureContent(os.Getenv("network_logs_capture_content"))
+	if capture_content_err != nil {
+		failf(capture_content_err.Error())
+	}
 
 	sharding_data := TestSharding{}
 	if os.Getenv("use_test_sharding") != "" {
@@ -124,6 +146,17 @@ func createBuildPayload() BrowserStackPayload {
 		Project:             os.Getenv("project"),
 		ProjectNotifyURL:    os.Getenv("project_notify_url"),
 		UseLocal:            use_local,
+	}
+
+	// networkLogsOptions.captureContent is only honoured by App Automate when
+	// networkLogs is also enabled, so enable it automatically when capture
+	// content is requested (avoids a backend "networkLogs not enabled" error).
+	if capture_content {
+		if !network_logs {
+			log.Println("network_logs auto-enabled because network_logs_capture_content is set to true")
+		}
+		payload.NetworkLogs = true
+		payload.NetworkLogsOptions = &NetworkLogsOptions{CaptureContent: true}
 	}
 
 	getTestFilters(&payload)

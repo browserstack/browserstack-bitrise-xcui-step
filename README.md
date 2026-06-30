@@ -43,6 +43,7 @@ Complete the following steps to configure BrowserStack's XCUI step in Bitrise:
 | `Devices` | Provide one or more device-OS combination in a new line. For example: <br /> `iPhone 11-13` <br />`iPhone XS-15` | Required | N/A |
 | `Instrumentation logs` | Generate instrumentation logs of the test session  | Optional | `true` |
 | `Network logs` | Generate network logs of your test sessions to capture network traffic, latency, etc. | Optional | `false` |
+| `Capture network logs content` | Capture request and response content (bodies) in network logs, not just metadata. Automatically enables **Network logs**. | Optional | `false` |
 | `Device Logs` | Generate device logs | Optional | `false` |
 | `Capture screenshots` | Capture the screenshots of the test execution| Optional | `false` |
 | `Video recording` | Record video of the test execution  | Optional | `true` |

@@ -130,6 +130,18 @@ inputs:
         - "true"
         - "false"
       category: 'Debug logs'
+  - network_logs_capture_content: "false"
+    opts:
+      title: 'Capture network logs content'
+      summary: 'Capture the request and response content (bodies) in network logs, not just metadata.'
+      description: |
+        Capture the content (request and response bodies) of network logs, in addition to metadata such as URLs, headers, latency and status codes.
+
+        Enabling this automatically enables **Network Logs** (it has no effect on its own).
+      value_options:
+        - "true"
+        - "false"
+      category: 'Debug logs'
   - device_logs: "false"
     opts:
       title: 'Device Logs'
