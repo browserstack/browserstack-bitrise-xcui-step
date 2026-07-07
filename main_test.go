@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -107,5 +108,73 @@ func TestLocateTestRunnerFileAndZip(t *testing.T) {
 
 		os.Remove("Tests iOS-Runner.app")
 		os.Remove("test_suite.zip")
+	}
+}
+
+func TestParseNetworkLogsOptions(t *testing.T) {
+	t.Log("It should treat an empty value as not set")
+	{
+		options, err := parseNetworkLogsOptions("")
+		require.NoError(t, err)
+		require.Nil(t, options)
+	}
+	t.Log("It should parse captureContent true")
+	{
+		options, err := parseNetworkLogsOptions(`{"captureContent": true}`)
+		require.NoError(t, err)
+		require.NotNil(t, options)
+		require.True(t, options.CaptureContent)
+	}
+	t.Log("It should parse captureContent false")
+	{
+		options, err := parseNetworkLogsOptions(`{"captureContent": false}`)
+		require.NoError(t, err)
+		require.NotNil(t, options)
+		require.False(t, options.CaptureContent)
+	}
+	t.Log("It should return an actionable error on malformed JSON")
+	{
+		_, err := parseNetworkLogsOptions(`{captureContent: true}`)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "network_logs_options")
+	}
+	t.Log("It should return an actionable error on a wrong value type")
+	{
+		_, err := parseNetworkLogsOptions(`{"captureContent": "true"}`)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "network_logs_options")
+	}
+}
+
+func TestCreateBuildPayloadNetworkLogsOptions(t *testing.T) {
+	t.Setenv("devices_list", "iPhone 14-16")
+
+	t.Log("captureContent true -> networkLogs forced true + networkLogsOptions.captureContent true")
+	{
+		t.Setenv("network_logs", "false")
+		t.Setenv("network_logs_options", `{"captureContent": true}`)
+
+		payload := createBuildPayload()
+		require.True(t, payload.NetworkLogs)
+		require.NotNil(t, payload.NetworkLogsOptions)
+		require.True(t, payload.NetworkLogsOptions.CaptureContent)
+
+		marshalled, err := json.Marshal(payload)
+		require.NoError(t, err)
+		assert.Contains(t, string(marshalled), `"networkLogs":true`)
+		assert.Contains(t, string(marshalled), `"networkLogsOptions":{"captureContent":true}`)
+	}
+
+	t.Log("options unset -> networkLogsOptions omitted (backward compatible)")
+	{
+		t.Setenv("network_logs", "true")
+		t.Setenv("network_logs_options", "")
+
+		payload := createBuildPayload()
+		require.Nil(t, payload.NetworkLogsOptions)
+
+		marshalled, err := json.Marshal(payload)
+		require.NoError(t, err)
+		assert.NotContains(t, string(marshalled), "networkLogsOptions")
 	}
 }
