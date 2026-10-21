@@ -35,7 +35,7 @@ func main() {
 	find_and_zip_file_err := locateTestRunnerFileAndZip(test_suite_path)
 
 	if find_and_zip_file_err != nil {
-		failf(find_and_zip_file_err.Error())
+		failf("%s", find_and_zip_file_err.Error())
 	}
 
 	test_runner_app := TEST_RUNNER_ZIP_FILE_NAME
@@ -45,13 +45,13 @@ func main() {
 	upload_app, err := upload(ios_app, APP_UPLOAD_ENDPOINT, username, access_key)
 
 	if err != nil {
-		failf(err.Error())
+		failf("%s", err.Error())
 	}
 
 	upload_app_parsed_response := jsonParse(upload_app)
 
 	if upload_app_parsed_response["app_url"] == "" {
-		failf(err.Error())
+		failf("%s", err.Error())
 	}
 
 	log.Print("Successfully uploaded the app")
@@ -63,13 +63,13 @@ func main() {
 	upload_test_suite, err := upload(test_runner_app, TEST_SUITE_UPLOAD_ENDPOINT, username, access_key)
 
 	if err != nil {
-		failf(err.Error())
+		failf("%s", err.Error())
 	}
 
 	test_suite_upload_parsed_response := jsonParse(upload_test_suite)
 
 	if test_suite_upload_parsed_response["test_suite_url"] == "" {
-		failf(err.Error())
+		failf("%s", err.Error())
 	}
 
 	log.Print("Successfully uploaded the test suite")
@@ -79,7 +79,7 @@ func main() {
 	build_response, err := build(app_url, test_suite_url, username, access_key)
 
 	if err != nil {
-		failf(err.Error())
+		failf("%s", err.Error())
 	}
 
 	build_parsed_response := jsonParse(build_response)
@@ -99,7 +99,7 @@ func main() {
 	build_status, err = checkBuildStatus(build_id, username, access_key, check_build_status)
 
 	if err != nil {
-		failf(err.Error())
+		failf("%s", err.Error())
 	}
 
 	cmd_log_build_id, err_build_id := exec.Command("bitrise", "envman", "add", "--key", "BROWSERSTACK_BUILD_URL", "--value", APP_AUTOMATE_BUILD_DASHBOARD_URL+build_parsed_response["build_id"].(string)).CombinedOutput()
